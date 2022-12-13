@@ -1,6 +1,7 @@
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use std::collections::{HashMap, HashSet};
+use std::str::Chars;
 
 lazy_static! {
     static ref PRIORITIES: HashMap<char, u32> = {
@@ -18,21 +19,19 @@ lazy_static! {
     };
 }
 
-fn get_packs(input: &str) -> Vec<(&str, &str)> {
-    input
-        .lines()
-        .map(|line| {
-            let split_point = line.len() / 2;
-            line.split_at(split_point)
-        })
-        .collect()
+fn get_packs(input: &str) -> Vec<&str> {
+    input.lines().collect()
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
-    let packs = get_packs(input);
+    let pack = get_packs(input);
 
-    let sum = packs
-        .iter()
+    let pack_pouches = pack.iter().map(|line| {
+        let split_point = line.len() / 2;
+        line.split_at(split_point)
+    });
+
+    let sum = pack_pouches
         .map(|pack| {
             let mut found = HashSet::new();
             found.extend(pack.0.chars());
@@ -45,7 +44,31 @@ pub fn part_one(input: &str) -> Option<u32> {
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    None
+    let packs = get_packs(input);
+
+    let groups = packs.iter().chunks(3);
+
+    let result: u32 = groups
+        .into_iter()
+        .map(|chunk| {
+            let mut previous_packs: Vec<HashSet<char>> = vec![];
+            for pack in chunk {
+                // if a previous entry isn't found, this is the first one, so don't filter at all
+                let chars: Vec<char> = if let Some(previous) = previous_packs.last() {
+                    pack.chars().filter(|x| previous.contains(x)).collect()
+                } else {
+                    pack.chars().collect()
+                };
+                let mut current_set: HashSet<char> = HashSet::new();
+                current_set.extend(chars.iter());
+                previous_packs.push(current_set);
+            }
+            let remaining = previous_packs.last().unwrap().iter().last().unwrap();
+            *PRIORITIES.get(remaining).unwrap()
+        })
+        .sum();
+
+    Some(result)
 }
 
 fn main() {
@@ -67,6 +90,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 3);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(70));
     }
 }
