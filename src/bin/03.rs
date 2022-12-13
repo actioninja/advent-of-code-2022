@@ -1,7 +1,6 @@
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use std::collections::{HashMap, HashSet};
-use std::str::Chars;
 
 lazy_static! {
     static ref PRIORITIES: HashMap<char, u32> = {

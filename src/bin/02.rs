@@ -1,5 +1,5 @@
 use advent_of_code::helpers::strip_newline;
-use itertools::{min, Itertools};
+use itertools::Itertools;
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
 enum Play {

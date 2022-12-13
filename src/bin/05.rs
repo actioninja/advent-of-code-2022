@@ -1,5 +1,3 @@
-use itertools::Itertools;
-
 #[derive(Eq, PartialEq, Clone, Debug)]
 struct Stacks {
     pub stacks: Vec<Vec<char>>,
