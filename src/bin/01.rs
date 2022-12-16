@@ -8,7 +8,7 @@ fn elves(in_str: String) -> Vec<u32> {
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
-    let mut elves = elves(strip_newline(input));
+    let elves = elves(strip_newline(input));
 
     let highest = elves.iter().fold(0u32, |acc, x| {
         if *x > acc {

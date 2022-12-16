@@ -123,6 +123,17 @@ pub enum Direction {
     West,
 }
 
+impl Direction {
+    pub fn step(self, coordinate: (isize, isize)) -> (isize, isize) {
+        match self {
+            Self::North => (coordinate.0, coordinate.1 + 1),
+            Self::South => (coordinate.0, coordinate.1 - 1),
+            Self::East => (coordinate.0 + 1, coordinate.1),
+            Self::West => (coordinate.0 - 1, coordinate.1),
+        }
+    }
+}
+
 pub struct DirectionIter<'a, T> {
     backing_vec: &'a mut Vec2d<T>,
     direction: Direction,
