@@ -5,23 +5,37 @@ use std::collections::HashSet;
 #[derive(Eq, PartialEq, Debug, Clone)]
 struct Rope {
     pub head: (isize, isize),
-    pub tail: (isize, isize),
+    pub tail: Vec<(isize, isize)>,
     pub visited: HashSet<(isize, isize)>,
 }
 
 impl Rope {
-    pub fn new() -> Self {
+    pub fn new(length: usize) -> Self {
         let mut visited = HashSet::new();
         visited.insert((0, 0));
+        let tail = vec![(0, 0); length - 1];
         Self {
             head: (0, 0),
-            tail: (0, 0),
+            tail,
             visited,
         }
     }
 
-    pub fn move_tail_towards_head(&mut self) {
-        let difference = (self.head.0 - self.tail.0, self.head.1 - self.tail.1);
+    pub fn update_chain(&mut self) {
+        let mut full_chain = vec![self.head];
+        full_chain.extend(self.tail.clone());
+
+        let mut next = self.head;
+        for i in 0..self.tail.len() {
+            let current = self.tail[i];
+            let result = Rope::move_knot_towards_next(current, next);
+            self.tail[i] = result;
+            next = result;
+        }
+    }
+
+    pub fn move_knot_towards_next(knot: (isize, isize), next: (isize, isize)) -> (isize, isize) {
+        let difference = (next.0 - knot.0, next.1 - knot.1);
 
         let abs = (difference.0.abs(), difference.1.abs());
 
@@ -29,15 +43,17 @@ impl Rope {
 
         if should_move {
             let move_amount = (difference.0.clamp(-1, 1), difference.1.clamp(-1, 1));
-            self.tail = (self.tail.0 + move_amount.0, self.tail.1 + move_amount.1);
+            (knot.0 + move_amount.0, knot.1 + move_amount.1)
+        } else {
+            knot
         }
-
-        self.visited.insert(self.tail);
     }
 
     pub fn move_in_direction(&mut self, direction: Direction) {
         self.head = direction.step(self.head);
-        self.move_tail_towards_head();
+        self.update_chain();
+        let new_tail_loc = *self.tail.last().unwrap();
+        self.visited.insert(new_tail_loc);
     }
 
     pub fn move_in_direction_multiple(&mut self, direction: Direction, count: usize) {
@@ -68,7 +84,7 @@ impl Rope {
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
-    let mut rope = Rope::new();
+    let mut rope = Rope::new(2);
 
     for command in input.lines() {
         rope.run_command(command);
@@ -78,7 +94,13 @@ pub fn part_one(input: &str) -> Option<u32> {
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    None
+    let mut rope = Rope::new(10);
+
+    for command in input.lines() {
+        rope.run_command(command);
+    }
+
+    Some(rope.num_visited() as u32)
 }
 
 fn main() {
@@ -99,7 +121,14 @@ mod tests {
 
     #[test]
     fn test_part_two() {
-        let input = advent_of_code::read_file("examples", 9);
-        assert_eq!(part_two(&input), None);
+        let input = "R 5
+U 8
+L 8
+D 3
+R 17
+D 10
+L 25
+U 20";
+        assert_eq!(part_two(input), Some(36));
     }
 }
