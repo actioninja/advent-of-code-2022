@@ -1,3 +1,6 @@
+use advent_of_code::helpers::Vec2d;
+use std::fmt::{Debug, Display, Formatter};
+
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SimpleCPU {
     register_x: isize,
@@ -60,8 +63,55 @@ pub fn part_one(input: &str) -> Option<u32> {
     Some(sum as u32)
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    None
+struct CRTGenerator {
+    pub cycle_history: Vec<isize>,
+}
+
+impl CRTGenerator {
+    fn new(cycle_history: Vec<isize>) -> Self {
+        Self { cycle_history }
+    }
+
+    fn check_cycle(&self, cycle_num: usize) -> bool {
+        let cycle_cast = cycle_num as isize % 40;
+        let sprite_pos = self.cycle_history[cycle_num - 1];
+
+        cycle_cast >= sprite_pos && cycle_cast <= sprite_pos + 2
+    }
+}
+
+#[derive(Eq, PartialEq, Copy, Clone)]
+pub struct ScreenPixel(bool);
+
+impl Display for ScreenPixel {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", if self.0 { "#" } else { "." })
+    }
+}
+
+impl Display for CRTGenerator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut screen = Vec2d::new_filled(40, 6, ScreenPixel(false));
+        for cycle in 1..=240 {
+            let lit = self.check_cycle(cycle);
+            screen.vec[cycle - 1] = ScreenPixel(lit);
+        }
+        write!(f, "{}", screen)
+    }
+}
+
+pub fn part_two(input: &str) -> Option<String> {
+    let mut cpu = SimpleCPU::new();
+
+    for line in input.lines() {
+        cpu.run_instruction(line);
+    }
+
+    let mut screen = CRTGenerator::new(cpu.history);
+
+    let out = format!("{}", screen);
+
+    Some(out)
 }
 
 fn main() {
@@ -83,6 +133,12 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 10);
-        assert_eq!(part_two(&input), None);
+        let expected = "##..##..##..##..##..##..##..##..##..##..
+###...###...###...###...###...###...###.
+####....####....####....####....####....
+#####.....#####.....#####.....#####.....
+######......######......######......####
+#######.......#######.......#######.....";
+        assert_eq!(part_two(&input), Some(expected.to_string()));
     }
 }

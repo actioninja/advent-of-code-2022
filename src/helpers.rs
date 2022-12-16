@@ -12,7 +12,7 @@ pub fn strip_newline(in_str: &str) -> String {
 
 // I know that with a fixed size arrays would probably be better but vecs mean I don't have to think
 // too hard about the compile time lengths
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Vec2d<T> {
     pub vec: Vec<T>,
     pub x: usize,
@@ -91,7 +91,7 @@ impl<T: Clone> Vec2d<T> {
     }
 }
 
-impl<T: Debug> Display for Vec2d<T> {
+impl<T: Debug> Debug for Vec2d<T> {
     // doesn't need to be fast, just work
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let to_strings: Vec<String> = self.vec.iter().map(|x| format!("{:?}", x)).collect();
@@ -106,6 +106,30 @@ impl<T: Debug> Display for Vec2d<T> {
         let formatted = to_strings
             .iter()
             .map(|x| format!(" {x:width$} ", width = pad_len))
+            .chunks(self.x)
+            .into_iter()
+            .map(|mut chunk| chunk.join(""))
+            .join("\n");
+
+        write!(f, "{formatted}")
+    }
+}
+
+impl<T: Display> Display for Vec2d<T> {
+    // doesn't need to be fast, just work
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let to_strings: Vec<String> = self.vec.iter().map(|x| format!("{}", x)).collect();
+        let mut sorted = to_strings.clone();
+        sorted.sort_by_key(|a| a.len());
+        sorted.reverse();
+
+        let longest = to_strings[0].clone();
+
+        let pad_len = longest.len();
+
+        let formatted = to_strings
+            .iter()
+            .map(|x| format!("{x:width$}", width = pad_len))
             .chunks(self.x)
             .into_iter()
             .map(|mut chunk| chunk.join(""))
