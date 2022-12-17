@@ -4,6 +4,7 @@
  */
 
 use itertools::Itertools;
+use num::Num;
 use std::fmt::{Debug, Display, Formatter};
 
 pub fn strip_newline(in_str: &str) -> String {
@@ -89,6 +90,19 @@ impl<T: Clone> Vec2d<T> {
             current: coordinate,
         }
     }
+
+    pub fn index_to_coord(&self, index: usize) -> (usize, usize) {
+        (index % self.x, index / self.x)
+    }
+
+    pub fn resize(&mut self, new_x: usize, new_y: usize) {
+        self.x = new_x;
+        self.y = new_y;
+    }
+
+    pub fn replace_vec(&mut self, vec: &Vec<T>) {
+        self.vec = vec.clone();
+    }
 }
 
 impl<T: Debug> Debug for Vec2d<T> {
@@ -139,6 +153,24 @@ impl<T: Display> Display for Vec2d<T> {
     }
 }
 
+pub fn display_bool_grid(grid: &Vec2d<bool>) -> String {
+    let to_strings: Vec<String> = grid
+        .vec
+        .iter()
+        .map(|x| {
+            let display = if *x { "X" } else { "." };
+            format!("{display}")
+        })
+        .collect();
+
+    to_strings
+        .iter()
+        .chunks(grid.x)
+        .into_iter()
+        .map(|mut chunk| chunk.join(""))
+        .join("\n")
+}
+
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
 pub enum Direction {
     North,
@@ -148,12 +180,13 @@ pub enum Direction {
 }
 
 impl Direction {
-    pub fn step(self, coordinate: (isize, isize)) -> (isize, isize) {
+    pub fn step<T: Num>(self, coordinate: (T, T)) -> (T, T) {
+        let one = T::one();
         match self {
-            Self::North => (coordinate.0, coordinate.1 + 1),
-            Self::South => (coordinate.0, coordinate.1 - 1),
-            Self::East => (coordinate.0 + 1, coordinate.1),
-            Self::West => (coordinate.0 - 1, coordinate.1),
+            Self::North => (coordinate.0, coordinate.1 + one),
+            Self::South => (coordinate.0, coordinate.1 - one),
+            Self::East => (coordinate.0 + one, coordinate.1),
+            Self::West => (coordinate.0 - one, coordinate.1),
         }
     }
 }
